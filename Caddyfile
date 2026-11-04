@@ -1,0 +1,14 @@
+:{$PORT:80} {
+
+    root * /app
+
+    encode zstd gzip
+
+    # Protect internal and sensitive files
+    @private path /includes/* /storage/* /.env* /.git/* /.vercel/* /src/* /node_modules/* /README.md /TEST-REPORT.md /LICENSE-NOTICE.txt /package* /tsconfig.json /tailwind.config.js /Dockerfile /Caddyfile
+
+    respond @private 404
+
+    # PHP application server
+    php_server
+}

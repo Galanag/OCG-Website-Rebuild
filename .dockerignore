@@ -1,0 +1,12 @@
+.git
+**/.git
+
+.vercel
+**/.vercel
+
+node_modules
+**/node_modules
+
+.env
+.env.*
+!.env.example

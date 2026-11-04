@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 82" role="img" aria-labelledby="title desc">
+  <title id="title">Oro-Construction Group</title><desc id="desc">OCG wordmark in red and green</desc>
+  <rect width="340" height="82" rx="8" fill="#ffffff"/>
+  <g transform="translate(4 8)">
+    <circle cx="32" cy="31" r="25" fill="none" stroke="#a7252d" stroke-width="6"/>
+    <circle cx="32" cy="31" r="15" fill="none" stroke="#286b45" stroke-width="5"/>
+    <path d="M17 45 L47 17" stroke="#286b45" stroke-width="4" stroke-linecap="round"/>
+    <path d="M14 22 C18 10 32 5 43 12" fill="none" stroke="#a7252d" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  <text x="72" y="47" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="39" letter-spacing="3" fill="#174a35">OCG</text>
+  <text x="73" y="65" font-family="Arial, Helvetica, sans-serif" font-size="9.4" font-weight="700" letter-spacing="1.25" fill="#64746a">ORO-CONSTRUCTION GROUP</text>
+</svg>

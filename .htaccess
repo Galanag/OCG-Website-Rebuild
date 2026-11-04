@@ -1,0 +1,54 @@
+Options -Indexes
+DirectoryIndex index.php
+ErrorDocument 404 /404.php
+
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+# Keep legacy public WordPress page URLs working when visitors arrive from bookmarks/search.
+RewriteRule ^about/?$ about.php [R=301,L,NC]
+RewriteRule ^vision-mission/?$ vision-mission.php [R=301,L,NC]
+RewriteRule ^subsidiaries/?$ subsidiaries.php [R=301,L,NC]
+RewriteRule ^services-projects/?$ services-projects.php [R=301,L,NC]
+RewriteRule ^services/?$ services.php [R=301,L,NC]
+RewriteRule ^projects/?$ projects.php [R=301,L,NC]
+RewriteRule ^why-choose-us/?$ why-choose-us.php [R=301,L,NC]
+RewriteRule ^gallery/?$ photo.php [R=301,L,NC]
+RewriteRule ^photo/?$ photo.php [R=301,L,NC]
+RewriteRule ^video/?$ video.php [R=301,L,NC]
+RewriteRule ^events/?$ events.php [R=301,L,NC]
+RewriteRule ^documents/?$ documents.php [R=301,L,NC]
+RewriteRule ^contact/?$ contact.php [R=301,L,NC]
+RewriteRule ^survey/?$ survey.php [R=301,L,NC]
+RewriteRule ^privacy/?$ privacy.php [R=301,L,NC]
+
+# Redirect selected legacy project post URLs to the rebuild's article pages.
+RewriteRule ^2025/12/26/collider-development-in-ethiopia(-2)?/?$ article.php?slug=corridor-development [R=301,L,QSA,NC]
+RewriteRule ^2025/12/26/oromia-supreme-court-1-home/?$ article.php?slug=waliso-integrated-bus-terminal [R=301,L,QSA,NC]
+RewriteRule ^2025/12/26/oromia-supreme-court-2-home-2/?$ article.php?slug=walmal-river-irrigation [R=301,L,QSA,NC]
+RewriteRule ^2025/12/12/oromia-supreme-court-home/?$ article.php?slug=oromia-supreme-court [R=301,L,QSA,NC]
+RewriteRule ^2025/12/15/oromia-supreme-court-2-copy-2/?$ article.php?slug=oromia-supreme-court [R=301,L,QSA,NC]
+
+# Keep application source, PHP includes, logs and submitted partnership files out of public requests.
+RewriteRule ^(includes|src|storage)(/|$) - [F,L,NC]
+</IfModule>
+
+<FilesMatch "(^\.env|\.log$|\.ini$|\.lock$|\.md$|\.ts$|\.json$|\.ya?ml$)">
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Order allow,deny
+    Deny from all
+  </IfModule>
+</FilesMatch>
+
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 14 days"
+  ExpiresByType application/javascript "access plus 14 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType image/webp "access plus 30 days"
+  ExpiresByType image/jpeg "access plus 30 days"
+  ExpiresByType image/png "access plus 30 days"
+</IfModule>

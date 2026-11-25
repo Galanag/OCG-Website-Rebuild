@@ -1,0 +1,574 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  INVITED
+}
+
+enum ProjectStatus {
+  PROPOSED
+  PLANNING
+  TENDERING
+  AWARDED
+  STARTED
+  ONGOING
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum AnnouncementCategory {
+  JOB_VACANCY
+  BID_TENDER
+  PROCUREMENT_NOTICE
+  EXPRESSION_OF_INTEREST
+  CONTRACT_AWARD
+  GENERAL_NOTICE
+  TRAINING
+  OTHER
+}
+
+enum EventStatus {
+  UPCOMING
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
+enum SubmissionStatus {
+  NEW
+  IN_PROGRESS
+  RESOLVED
+  ARCHIVED
+}
+
+enum MediaKind {
+  IMAGE
+  DOCUMENT
+}
+
+enum MediaVisibility {
+  PUBLIC
+  PRIVATE
+}
+
+model User {
+  id                 String    @id @default(uuid()) @db.VarChar(36)
+  name               String    @db.VarChar(160)
+  email              String    @unique @db.VarChar(190)
+  passwordHash       String    @db.VarChar(255)
+  status             UserStatus @default(ACTIVE)
+  mustChangePassword Boolean   @default(false)
+  lastLoginAt        DateTime?
+  createdById        String?   @db.VarChar(36)
+  updatedById        String?   @db.VarChar(36)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  deletedAt          DateTime?
+
+  createdBy      User?                @relation("UserCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy      User?                @relation("UserUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdUsers   User[]               @relation("UserCreatedBy")
+  updatedUsers   User[]               @relation("UserUpdatedBy")
+  roles          UserRole[]
+  sessions       Session[]
+  resetTokens    PasswordResetToken[]
+  auditLogs      AuditLog[]
+  mediaAssets    MediaAsset[]
+  projectsCreated Project[]           @relation("ProjectCreatedBy")
+  projectsUpdated Project[]           @relation("ProjectUpdatedBy")
+  announcementsCreated Announcement[] @relation("AnnouncementCreatedBy")
+  announcementsUpdated Announcement[] @relation("AnnouncementUpdatedBy")
+  newsCreated    NewsArticle[]        @relation("NewsCreatedBy")
+  newsUpdated    NewsArticle[]        @relation("NewsUpdatedBy")
+  eventsCreated  Event[]              @relation("EventCreatedBy")
+  eventsUpdated  Event[]              @relation("EventUpdatedBy")
+  submissionsReviewed ContactSubmission[]    @relation("ContactReviewedBy")
+  partnershipsReviewed PartnershipSubmission[] @relation("PartnershipReviewedBy")
+  settingsUpdated SiteSetting[]       @relation("SettingUpdatedBy")
+  pageSectionsCreated PageSection[]   @relation("PageSectionCreatedBy")
+  pageSectionsUpdated PageSection[]   @relation("PageSectionUpdatedBy")
+  projectStatusChanges ProjectStatusHistory[] @relation("ProjectStatusChangedBy")
+
+  @@index([status, deletedAt])
+  @@index([createdById])
+  @@index([updatedById])
+}
+
+model Role {
+  id          String     @id @default(uuid()) @db.VarChar(36)
+  name        String     @unique @db.VarChar(60)
+  description String     @db.VarChar(500)
+  permissions Json
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  users       UserRole[]
+}
+
+model UserRole {
+  id        String   @id @default(uuid()) @db.VarChar(36)
+  userId    String   @db.VarChar(36)
+  roleId    String   @db.VarChar(36)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role      Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([roleId])
+}
+
+model Session {
+  id             String    @id @default(uuid()) @db.VarChar(36)
+  userId         String    @db.VarChar(36)
+  tokenHash      String    @unique @db.VarChar(64)
+  csrfTokenHash  String    @db.VarChar(64)
+  userAgent      String    @db.VarChar(500)
+  ipAddress      String    @db.VarChar(45)
+  expiresAt      DateTime
+  revokedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+  @@index([expiresAt])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(uuid()) @db.VarChar(36)
+  userId    String    @db.VarChar(36)
+  tokenHash String    @unique @db.VarChar(64)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, expiresAt])
+}
+
+model Project {
+  id                     String        @id @default(uuid()) @db.VarChar(36)
+  reference              String        @unique @db.VarChar(80)
+  title                  String        @db.VarChar(200)
+  slug                   String        @unique @db.VarChar(220)
+  shortDescription       String        @db.VarChar(600)
+  description            String        @db.LongText
+  category               String        @db.VarChar(120)
+  constructionSector     String        @db.VarChar(120)
+  client                 String?       @db.VarChar(200)
+  contractor             String?       @db.VarChar(200)
+  consultant             String?       @db.VarChar(200)
+  location               String        @db.VarChar(200)
+  region                 String?       @db.VarChar(120)
+  country                String        @default("Ethiopia") @db.VarChar(100)
+  latitude               Decimal?      @db.Decimal(10, 7)
+  longitude              Decimal?      @db.Decimal(10, 7)
+  contractValue          Decimal?      @db.Decimal(18, 2)
+  currency               String        @default("ETB") @db.VarChar(3)
+  fundingSource          String?       @db.VarChar(200)
+  contractType           String?       @db.VarChar(120)
+  startDate              DateTime?
+  plannedCompletionDate  DateTime?
+  actualCompletionDate   DateTime?
+  progress               Int           @default(0)
+  financialProgress      Float?
+  projectManager         String?       @db.VarChar(160)
+  coverImageId           String?       @db.VarChar(36)
+  attachments          ProjectAttachment[]
+  status                 ProjectStatus @default(PROPOSED)
+  featured               Boolean       @default(false)
+  published              Boolean       @default(false)
+  publishedAt            DateTime?
+  createdById            String?       @db.VarChar(36)
+  updatedById            String?       @db.VarChar(36)
+  createdAt              DateTime      @default(now())
+  updatedAt              DateTime      @updatedAt
+  deletedAt              DateTime?
+
+  coverImage      MediaAsset?            @relation("ProjectCoverImage", fields: [coverImageId], references: [id], onDelete: SetNull)
+  images          ProjectImage[]
+  statusHistory   ProjectStatusHistory[]
+  createdBy       User?                  @relation("ProjectCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy       User?                  @relation("ProjectUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([published, deletedAt, featured])
+  @@index([status, published, deletedAt])
+  @@index([createdAt, published])
+  @@index([coverImageId])
+  @@index([createdById])
+  @@index([updatedById])
+}
+
+model ProjectAttachment {
+  id           String     @id @default(uuid()) @db.VarChar(36)
+  projectId    String     @db.VarChar(36)
+  mediaAssetId String     @db.VarChar(36)
+  caption      String?    @db.VarChar(500)
+  sortOrder    Int        @default(0)
+  createdAt    DateTime   @default(now())
+  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  mediaAsset   MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, mediaAssetId])
+  @@index([projectId, sortOrder])
+  @@index([mediaAssetId])
+}
+
+model ProjectImage {
+  id           String     @id @default(uuid()) @db.VarChar(36)
+  projectId    String     @db.VarChar(36)
+  mediaAssetId String     @db.VarChar(36)
+  caption      String?    @db.VarChar(500)
+  altText      String?    @db.VarChar(300)
+  sortOrder    Int        @default(0)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  project      Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  mediaAsset   MediaAsset @relation(fields: [mediaAssetId], references: [id], onDelete: Cascade)
+
+  @@unique([projectId, mediaAssetId])
+  @@index([projectId, sortOrder])
+  @@index([mediaAssetId])
+}
+
+model ProjectStatusHistory {
+  id             String        @id @default(uuid()) @db.VarChar(36)
+  projectId      String        @db.VarChar(36)
+  previousStatus ProjectStatus?
+  newStatus      ProjectStatus
+  changedById    String?       @db.VarChar(36)
+  note           String?       @db.VarChar(500)
+  changedAt      DateTime      @default(now())
+  project        Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  changedBy      User?         @relation("ProjectStatusChangedBy", fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@index([projectId, changedAt])
+  @@index([changedById])
+}
+
+model Announcement {
+  id                       String               @id @default(uuid()) @db.VarChar(36)
+  title                    String               @db.VarChar(220)
+  slug                     String               @unique @db.VarChar(240)
+  category                 AnnouncementCategory
+  reference                String?              @unique @db.VarChar(100)
+  summary                  String               @db.VarChar(700)
+  content                  String               @db.LongText
+  applicationInstructions  String?              @db.Text
+  externalApplicationUrl   String?              @db.VarChar(1000)
+  featured                 Boolean              @default(false)
+  published                Boolean              @default(false)
+  publishedAt              DateTime?
+  scheduledFor             DateTime?
+  deadline                 DateTime?
+  positionTitle            String?              @db.VarChar(200)
+  department               String?              @db.VarChar(150)
+  vacancyCount             Int?
+  requiredQualifications   String?              @db.Text
+  experienceRequirements   String?              @db.Text
+  employmentType           String?              @db.VarChar(100)
+  dutyStation              String?              @db.VarChar(200)
+  tenderReference          String?              @db.VarChar(100)
+  tenderTitle              String?              @db.VarChar(220)
+  procurementCategory      String?              @db.VarChar(150)
+  eligibilityRequirements  String?              @db.Text
+  scopeOfWork              String?              @db.Text
+  submissionDeadline       DateTime?
+  bidOpeningInformation    String?              @db.VarChar(500)
+  submissionInstructions   String?              @db.Text
+  contactInformation       String?              @db.VarChar(500)
+  salaryRange              String?              @db.VarChar(200)
+  responsibilities         String?              @db.Text
+  tenderValue              Decimal?             @db.Decimal(18, 2)
+  currency                 String?              @db.VarChar(3)
+  submissionLocation       String?              @db.VarChar(300)
+  openingDate              DateTime?
+  contactPerson            String?              @db.VarChar(160)
+  createdById              String?              @db.VarChar(36)
+  updatedById              String?              @db.VarChar(36)
+  createdAt                DateTime             @default(now())
+  updatedAt                DateTime             @updatedAt
+  deletedAt                DateTime?
+
+  attachments AnnouncementAttachment[]
+  createdBy   User?                     @relation("AnnouncementCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy   User?                     @relation("AnnouncementUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([published, category, deadline, deletedAt])
+  @@index([published, featured, deletedAt])
+  @@index([category, published])
+  @@index([deadline, published])
+  @@index([createdById])
+  @@index([updatedById])
+}
+
+model AnnouncementAttachment {
+  id             String      @id @default(uuid()) @db.VarChar(36)
+  announcementId String      @db.VarChar(36)
+  mediaAssetId   String      @db.VarChar(36)
+  caption        String?     @db.VarChar(500)
+  sortOrder      Int         @default(0)
+  createdAt      DateTime    @default(now())
+  announcement   Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
+  mediaAsset     MediaAsset  @relation(fields: [mediaAssetId], references: [id], onDelete: Cascade)
+
+  @@unique([announcementId, mediaAssetId])
+  @@index([announcementId, sortOrder])
+  @@index([mediaAssetId])
+}
+
+model NewsArticle {
+  id              String    @id @default(uuid()) @db.VarChar(36)
+  title           String    @db.VarChar(220)
+  slug            String    @unique @db.VarChar(240)
+  summary         String    @db.VarChar(700)
+  content         String    @db.LongText
+  category        String    @db.VarChar(120)
+  tags            Json
+  featuredImageId String?   @db.VarChar(36)
+  socialImageId   String?   @db.VarChar(36)
+  seoTitle        String?   @db.VarChar(220)
+  seoDescription  String?   @db.VarChar(350)
+  authorName      String?   @db.VarChar(160)
+  published       Boolean   @default(false)
+  publishedAt     DateTime?
+  scheduledFor    DateTime?
+  featured        Boolean   @default(false)
+  createdById     String?   @db.VarChar(36)
+  updatedById     String?   @db.VarChar(36)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  featuredImage MediaAsset? @relation("NewsFeaturedImage", fields: [featuredImageId], references: [id], onDelete: SetNull)
+  socialImage   MediaAsset? @relation("NewsSocialImage", fields: [socialImageId], references: [id], onDelete: SetNull)
+  images        NewsImage[]
+  createdBy     User?       @relation("NewsCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy     User?       @relation("NewsUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([published, publishedAt, deletedAt])
+  @@index([category, published])
+  @@index([published, featured, deletedAt])
+  @@index([featuredImageId])
+  @@index([socialImageId])
+  @@index([createdById])
+  @@index([updatedById])
+}
+
+model NewsImage {
+  id            String      @id @default(uuid()) @db.VarChar(36)
+  newsArticleId String      @db.VarChar(36)
+  mediaAssetId  String      @db.VarChar(36)
+  caption       String?     @db.VarChar(500)
+  altText       String?     @db.VarChar(300)
+  sortOrder     Int         @default(0)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  newsArticle   NewsArticle @relation(fields: [newsArticleId], references: [id], onDelete: Cascade)
+  mediaAsset    MediaAsset  @relation(fields: [mediaAssetId], references: [id], onDelete: Cascade)
+
+  @@unique([newsArticleId, mediaAssetId])
+  @@index([newsArticleId, sortOrder])
+  @@index([mediaAssetId])
+}
+
+model Event {
+  id               String      @id @default(uuid()) @db.VarChar(36)
+  title            String      @db.VarChar(220)
+  slug             String      @unique @db.VarChar(240)
+  description      String      @db.LongText
+  category         String      @db.VarChar(120)
+  eventImageId     String?     @db.VarChar(36)
+  startsAt         DateTime?
+  endsAt           DateTime?
+  location         String?     @db.VarChar(300)
+  onlineMeetingUrl String?     @db.VarChar(1000)
+  registrationUrl  String?     @db.VarChar(1000)
+  organizer        String?     @db.VarChar(200)
+  contactInfo      String?     @db.VarChar(500)
+  status           EventStatus @default(UPCOMING)
+  published        Boolean     @default(false)
+  publishedAt      DateTime?
+  featured         Boolean     @default(false)
+  createdById      String?     @db.VarChar(36)
+  updatedById      String?     @db.VarChar(36)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  deletedAt        DateTime?
+
+  eventImage MediaAsset? @relation("EventImage", fields: [eventImageId], references: [id], onDelete: SetNull)
+  createdBy  User?       @relation("EventCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy  User?       @relation("EventUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([published, startsAt, deletedAt])
+  @@index([status, published, startsAt])
+  @@index([eventImageId])
+  @@index([createdById])
+  @@index([updatedById])
+}
+
+model MediaAsset {
+  id           String          @id @default(uuid()) @db.VarChar(36)
+  originalName String          @db.VarChar(255)
+  storedName   String          @db.VarChar(255)
+  filePath     String          @db.VarChar(500)
+  mimeType     String          @db.VarChar(150)
+  extension    String          @db.VarChar(20)
+  size         Int
+  kind         MediaKind
+  visibility   MediaVisibility @default(PUBLIC)
+  altText      String?         @db.VarChar(300)
+  description  String?         @db.VarChar(1000)
+  createdById  String?         @db.VarChar(36)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  deletedAt    DateTime?
+
+  createdBy              User?                    @relation(fields: [createdById], references: [id], onDelete: SetNull)
+  projectCovers          Project[]                @relation("ProjectCoverImage")
+  projectImages          ProjectImage[]
+  projectAttachments     ProjectAttachment[]
+  newsFeatured           NewsArticle[]            @relation("NewsFeaturedImage")
+  newsSocial             NewsArticle[]            @relation("NewsSocialImage")
+  newsImages             NewsImage[]
+  events                 Event[]                   @relation("EventImage")
+  announcementAttachments AnnouncementAttachment[]
+  partnershipAttachments PartnershipSubmission[]
+  pageSections           PageSection[]
+
+  @@index([kind, visibility, deletedAt])
+  @@index([createdAt, deletedAt])
+  @@index([createdById])
+}
+
+model ContactSubmission {
+  id            String           @id @default(uuid()) @db.VarChar(36)
+  firstName     String           @db.VarChar(80)
+  lastName      String           @db.VarChar(80)
+  email         String           @db.VarChar(190)
+  phone         String?          @db.VarChar(40)
+  subject       String           @db.VarChar(160)
+  message       String           @db.Text
+  status        SubmissionStatus @default(NEW)
+  ipAddress     String?          @db.VarChar(45)
+  userAgent     String?          @db.VarChar(500)
+  reviewedById  String?          @db.VarChar(36)
+  reviewedAt    DateTime?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  reviewedBy User? @relation("ContactReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([email, createdAt])
+  @@index([reviewedById])
+}
+
+model SurveySubmission {
+  id        String           @id @default(uuid()) @db.VarChar(36)
+  name      String?          @db.VarChar(100)
+  email     String?          @db.VarChar(190)
+  area      String           @db.VarChar(100)
+  rating    String           @db.VarChar(40)
+  feedback  String           @db.Text
+  status    SubmissionStatus @default(NEW)
+  ipAddress String?          @db.VarChar(45)
+  userAgent String?          @db.VarChar(500)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@index([status, createdAt])
+  @@index([createdAt])
+}
+
+model PartnershipSubmission {
+  id                 String           @id @default(uuid()) @db.VarChar(36)
+  firstName          String           @db.VarChar(80)
+  lastName           String           @db.VarChar(80)
+  organization       String           @db.VarChar(180)
+  email              String           @db.VarChar(190)
+  phone              String?          @db.VarChar(40)
+  country            String?          @db.VarChar(100)
+  partnerType        String           @db.VarChar(120)
+  organizationWebsite String?         @db.VarChar(500)
+  notes              String           @db.Text
+  attachmentId       String?          @db.VarChar(36)
+  status             SubmissionStatus @default(NEW)
+  ipAddress          String?          @db.VarChar(45)
+  userAgent          String?          @db.VarChar(500)
+  reviewedById       String?          @db.VarChar(36)
+  reviewedAt         DateTime?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  attachment MediaAsset? @relation(fields: [attachmentId], references: [id], onDelete: SetNull)
+  reviewedBy User?       @relation("PartnershipReviewedBy", fields: [reviewedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([email, createdAt])
+  @@index([attachmentId])
+  @@index([reviewedById])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.VarChar(36)
+  userId     String?  @db.VarChar(36)
+  userEmail  String?  @db.VarChar(190)
+  action     String   @db.VarChar(120)
+  entityType String   @db.VarChar(80)
+  entityId   String?  @db.VarChar(100)
+  metadata   Json
+  ipAddress  String?  @db.VarChar(45)
+  userAgent  String?  @db.VarChar(500)
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([entityType, entityId])
+  @@index([action, createdAt])
+}
+
+model PageSection {
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  pageKey     String   @db.VarChar(80)
+  sectionKey  String   @db.VarChar(100)
+  title       String   @db.VarChar(220)
+  content     String   @db.LongText
+  metadata    Json
+  imageId     String?  @db.VarChar(36)
+  sortOrder   Int      @default(0)
+  published   Boolean  @default(true)
+  createdById String?  @db.VarChar(36)
+  updatedById String?  @db.VarChar(36)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+  image       MediaAsset? @relation(fields: [imageId], references: [id], onDelete: SetNull)
+  createdBy   User?    @relation("PageSectionCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  updatedBy   User?    @relation("PageSectionUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@unique([pageKey, sectionKey])
+  @@index([pageKey, published, sortOrder, deletedAt])
+  @@index([imageId])
+}
+
+model SiteSetting {
+  key         String   @id @db.VarChar(100)
+  value       Json
+  updatedById String?  @db.VarChar(36)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  updatedBy   User?    @relation("SettingUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  @@index([updatedById])
+}

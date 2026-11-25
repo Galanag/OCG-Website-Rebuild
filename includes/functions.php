@@ -5,6 +5,34 @@ require_once __DIR__ . '/config.php';
 function e(mixed $value): string {
     return htmlspecialchars((string)$value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
+
+function base_url(): string {
+    $configured = getenv('OCG_SITE_URL') ?: getenv('OCG_PUBLIC_URL');
+    if ($configured) {
+        return rtrim($configured, '/');
+    }
+
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (isset($_SERVER['SERVER_PORT']) && (int)$_SERVER['SERVER_PORT'] === 443);
+    $scheme = $https ? 'https' : 'http';
+    $host = (string)($_SERVER['HTTP_HOST'] ?? 'localhost');
+    $scriptDirectory = str_replace('\\', '/', dirname((string)($_SERVER['SCRIPT_NAME'] ?? '/index.php')));
+    $scriptDirectory = rtrim($scriptDirectory, '/');
+    if ($scriptDirectory === '.' || $scriptDirectory === '/') {
+        $scriptDirectory = '';
+    }
+
+    return $scheme . '://' . $host . $scriptDirectory;
+}
+
+function storage_path(string $path = ''): string {
+    return dirname(__DIR__) . '/storage/' . ltrim($path, '/');
+}
+
+function storage_is_writable(?string $path = null): bool {
+    $path = $path ?: storage_path();
+    return is_dir($path) && is_writable($path);
+}
 function set_flash(string $type, string $message): void {
     $_SESSION['flash'] = ['type' => $type, 'message' => $message];
 }
@@ -72,3 +100,13 @@ function render_flash(): void {
     $class = ($flash['type'] ?? '') === 'success' ? 'notice notice-success' : 'notice notice-error';
     echo '<div class="notice-wrap container"><div class="' . e($class) . '" role="status">' . e($flash['message'] ?? '') . '</div></div>';
 }
+
+if (!function_exists('wp_kses_post')) {
+    function wp_kses_post($data) {
+        return strip_tags((string) $data, '<p><br><strong><b><em><i><u><s><ul><ol><li><blockquote><h2><h3><h4><h5><h6><a><table><thead><tbody><tr><th><td><span><div><figure><figcaption><img><hr>');
+    }
+}
+
+require_once __DIR__ . '/api.php';
+require_once __DIR__ . '/components.php';
+require_once __DIR__ . '/corporate.php';

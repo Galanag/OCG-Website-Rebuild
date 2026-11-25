@@ -40,22 +40,25 @@ $bodyClass = $bodyClass ?? '';
       <div class="nav-dropdown" data-dropdown>
         <button class="nav-link nav-dropdown-trigger <?= nav_is_active(['about.php','vision-mission.php','subsidiaries.php']) ? 'active' : '' ?>" type="button" aria-expanded="false" data-dropdown-toggle>About Us <span class="chevron">⌄</span></button>
         <div class="dropdown-panel">
-          <a href="about.php">Who We Are &amp; Leadership</a>
-          <a href="vision-mission.php">Vision &amp; Mission</a>
-          <a href="subsidiaries.php">Our Subsidiaries</a>
+          <a href="about.php#company-overview">Who We Are &amp; Leadership</a>
+          <a href="about.php#vision-mission">Vision &amp; Mission</a>
+          <a href="about.php#subsidiaries">Our Subsidiaries</a>
+          <a href="financial-performance.php">Financial Performance</a>
         </div>
       </div>
       <a class="nav-link <?= nav_is_active(['services-projects.php','services.php','projects.php','why-choose-us.php']) ? 'active' : '' ?>" href="services-projects.php">Services &amp; Projects</a>
+      <a class="nav-link <?= nav_is_active(['projects.php','project-detail.php']) ? 'active' : '' ?>" href="projects.php">Projects</a>
       <div class="nav-dropdown" data-dropdown>
-        <button class="nav-link nav-dropdown-trigger <?= nav_is_active(['gallery.php','photo.php','video.php','events.php','documents.php']) ? 'active' : '' ?>" type="button" aria-expanded="false" data-dropdown-toggle>Gallery <span class="chevron">⌄</span></button>
+        <button class="nav-link nav-dropdown-trigger <?= nav_is_active(['gallery.php','photo.php','video.php','events.php','event-detail.php','documents.php']) ? 'active' : '' ?>" type="button" aria-expanded="false" data-dropdown-toggle>Gallery <span class="chevron">⌄</span></button>
         <div class="dropdown-panel">
-          <a href="photo.php">Photo Gallery</a>
-          <a href="video.php">Videos</a>
+          <a href="photo.php#photos">Photo Gallery</a>
+          <a href="photo.php#videos">Videos</a>
           <a href="events.php">Events</a>
-          <a href="documents.php">Documents</a>
+          <a href="photo.php#documents">Documents</a>
         </div>
       </div>
-      <a class="nav-link <?= nav_is_active(['news.php','article.php']) ? 'active' : '' ?>" href="news.php">News &amp; Updates</a>
+      <a class="nav-link <?= nav_is_active(['news.php','article.php','news-detail.php']) ? 'active' : '' ?>" href="news.php">News &amp; Updates</a>
+      <a class="nav-link <?= nav_is_active(['announcements.php','announcement-detail.php','vacancies.php','tenders.php']) ? 'active' : '' ?>" href="announcements.php">Announcements</a>
       <a class="nav-link <?= nav_is_active(['contact.php']) ? 'active' : '' ?>" href="contact.php">Contact</a>
       <a class="nav-cta" href="partner.php">Partner with us <span aria-hidden="true">↗</span></a>
     </nav>

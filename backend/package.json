@@ -1,0 +1,61 @@
+{
+  "name": "ocg-cms-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Secure TypeScript REST API and Prisma data layer for Oro-Construction Group",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "prisma generate && tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prisma:generate": "prisma generate",
+    "prisma:validate": "prisma validate",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:deploy": "prisma migrate deploy",
+    "migrate:status": "prisma migrate status",
+    "db:push": "prisma db push",
+    "seed": "prisma db seed",
+    "bootstrap:admin": "tsx prisma/bootstrap-admin.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/adapter-mariadb": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "argon2": "^0.45.2",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.3",
+    "express": "^5.3.0",
+    "express-rate-limit": "^8.7.5",
+    "file-type": "^22.3.0",
+    "helmet": "^8.3.0",
+    "mariadb": "^3.5.5",
+    "multer": "^2.3.0",
+    "nodemailer": "^10.6.1",
+    "sanitize-html": "^2.18.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.3.0",
+    "@types/node": "^22.20.0",
+    "@types/nodemailer": "^7.0.4",
+    "@types/sanitize-html": "^2.16.2",
+    "@types/supertest": "^6.0.3",
+    "prisma": "7.10.1",
+    "supertest": "^7.3.2",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vitest": "^5.1.1"
+  }
+}

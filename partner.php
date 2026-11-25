@@ -19,6 +19,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $notes = clean_message((string)($_POST['notes'] ?? ''), 2500);
         $attachmentNote = 'No attachment';
         $uploadError = '';
+        $uploadedPath = null;
+        $uploadedName = null;
+        $uploadedMime = null;
         if (!empty($_FILES['attachment']['name']) && (int)($_FILES['attachment']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
             $file = $_FILES['attachment'];
             if ((int)$file['error'] !== UPLOAD_ERR_OK) $uploadError = 'The file upload failed. Please try again.';
@@ -48,7 +51,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $safeName = bin2hex(random_bytes(16)) . '.' . $ext;
                     $dest = UPLOAD_DIR . DIRECTORY_SEPARATOR . $safeName;
                     if (!is_dir(UPLOAD_DIR) || !is_writable(UPLOAD_DIR) || !is_uploaded_file((string)$file['tmp_name']) || !move_uploaded_file((string)$file['tmp_name'], $dest)) $uploadError = 'The upload folder is not writable. Check storage/partner-uploads permissions in cPanel.';
-                    else $attachmentNote = $original . ' (stored securely as ' . $safeName . ')';
+                    else {
+                        $attachmentNote = $original . ' (stored securely as ' . $safeName . ')';
+                        $uploadedPath = $dest;
+                        $uploadedName = $original;
+                        $uploadedMime = $mime ?: null;
+                    }
                 }
             }
         }
@@ -57,9 +65,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($uploadError !== '') {
             set_flash('error', $uploadError);
         } else {
-            $body = "OCG website partnership request\n\nName: {$first} {$last}\nOrganisation: {$org}\nEmail: {$email}\nPhone: {$phone}\nCountry: {$country}\nRequest type: {$type}\nWebsite: {$websiteUrl}\nAttachment: {$attachmentNote}\n\nDetails:\n{$notes}\n\nReceived: " . date(DATE_ATOM);
-            if (safe_mail('New OCG partnership request: ' . $type, $body, $email)) set_flash('success', 'Thank you. Your partnership enquiry has been sent to OCG.');
-            else set_flash('error', 'Your request passed validation but email delivery is not configured on this server. Any attachment is stored in the protected storage/partner-uploads folder; configure cPanel email before launch.');
+            $apiSaved = false;
+            $apiFields = [
+                'firstName' => $first,
+                'lastName' => $last,
+                'organization' => $org,
+                'email' => $email,
+                'phone' => $phone,
+                'country' => $country,
+                'partnerType' => $type,
+                'organizationWebsite' => $websiteUrl ?: null,
+                'notes' => $notes,
+                'consent' => true,
+            ];
+            $apiFiles = $uploadedPath && $uploadedName ? ['attachment' => ['path' => $uploadedPath, 'name' => $uploadedName, 'mime' => $uploadedMime]] : [];
+            $apiResult = ocg_api_post_multipart('/partnership', $apiFields, $apiFiles);
+            if ($apiResult['ok']) {
+                $apiSaved = true;
+                set_flash('success', 'Thank you. Your partnership enquiry has been securely recorded with OCG.');
+            }
+            if (!$apiSaved) {
+                $body = "OCG website partnership request\n\nName: {$first} {$last}\nOrganisation: {$org}\nEmail: {$email}\nPhone: {$phone}\nCountry: {$country}\nRequest type: {$type}\nWebsite: {$websiteUrl}\nAttachment: {$attachmentNote}\n\nDetails:\n{$notes}\n\nReceived: " . date(DATE_ATOM);
+                if (safe_mail('New OCG partnership request: ' . $type, $body, $email)) set_flash('success', 'Thank you. Your partnership enquiry has been sent to OCG.');
+                else set_flash('error', 'Your request passed validation but both the submission service and email delivery are unavailable. Please try later or email ' . SITE_EMAIL . '.');
+            }
         }
     }
     header('Location: partner.php'); exit;
@@ -77,5 +106,5 @@ require __DIR__ . '/includes/header.php'; require __DIR__ . '/includes/page-hero
 <div class="form-field"><label for="partner_type">Type of enquiry</label><select id="partner_type" name="partner_type"><option>Business partnership</option><option>Supplier / vendor</option><option>Subcontractor</option><option>Project proposal</option><option>Investment / development</option><option>Professional services</option><option>Other</option></select></div>
 <div class="form-field full"><label for="organization_website">Organisation website</label><input id="organization_website" name="organization_website" type="url" maxlength="200" placeholder="https://"></div>
 <div class="form-field full"><label for="attachment">Capability statement or proposal</label><input id="attachment" name="attachment" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg"><div class="form-help">Optional · PDF, Word, Excel, PNG or JPG · Maximum 5 MB</div></div>
-<div class="form-field full"><label for="notes">Describe your proposal <span>*</span></label><textarea id="notes" name="notes" required maxlength="2500" placeholder="Organisation overview, proposed collaboration, capabilities and any relevant project details…"></textarea><div class="form-help"><span data-char-count="notes">0</span> / 2500 characters</div></div></div><label class="checkbox-row"><input type="checkbox" name="consent" value="1" required><span>I confirm that the details provided may be used to assess and respond to this partnership request. See the <a href="privacy.php">website privacy notice</a>.</span></label><button class="btn" type="submit">Submit partnership request <span aria-hidden="true">→</span></button><p class="notice-legal" style="margin-top:14px">This form sends mail through the host’s PHP mail service. Outbound email and file-upload permissions must be tested in cPanel.</p></form></div></section></main>
+<div class="form-field full"><label for="notes">Describe your proposal <span>*</span></label><textarea id="notes" name="notes" required maxlength="2500" placeholder="Organisation overview, proposed collaboration, capabilities and any relevant project details…"></textarea><div class="form-help"><span data-char-count="notes">0</span> / 2500 characters</div></div></div><label class="checkbox-row"><input type="checkbox" name="consent" value="1" required><span>I confirm that the details provided may be used to assess and respond to this partnership request. See the <a href="privacy.php">website privacy notice</a>.</span></label><button class="btn" type="submit">Submit partnership request <span aria-hidden="true">→</span></button><p class="notice-legal" style="margin-top:14px">Submissions and attachments are securely stored through the OCG CMS when available; email delivery is the fallback.</p></form></div></section></main>
 <?php require __DIR__ . '/includes/footer.php'; ?>

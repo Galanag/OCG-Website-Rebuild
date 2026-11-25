@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__ . '/bootstrap.php';
+
 $services = [
     ['title' => 'Building Construction', 'text' => 'Residential, commercial, mixed-use, institutional and public buildings, including finishing works.', 'image' => '12/6.1-8.webp', 'number' => '01'],
     ['title' => 'Infrastructure & Civil Works', 'text' => 'Roads, bridges, transportation networks, urban infrastructure and public amenities.', 'image' => '12/photo_2025-12-17_14-55-02-1024x768.webp', 'number' => '02'],

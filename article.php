@@ -1,6 +1,16 @@
 <?php
 require_once __DIR__ . '/includes/data.php';
 $slug = (string)($_GET['slug'] ?? '');
+if ($slug) {
+    if (ocg_api_item('news', $slug)) {
+        header('Location: news-detail.php?slug=' . rawurlencode($slug), true, 302);
+        exit;
+    }
+    if (ocg_api_item('projects', $slug)) {
+        header('Location: project-detail.php?slug=' . rawurlencode($slug), true, 302);
+        exit;
+    }
+}
 $project = null;
 foreach ($projects as $item) { if (hash_equals((string)$item['slug'], $slug)) { $project = $item; break; } }
 if (!$project) { http_response_code(404); $pageTitle = 'Update not found'; } else { $pageTitle = $project['title']; }

@@ -1,33 +1,14 @@
-import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Pool } from "pg";
 import { PrismaClient } from "../generated/prisma/client.js";
 import { env } from "../config/env.js";
 
-function databaseParts(): {
-  host: string;
-  port: number;
-  user: string;
-  password: string;
-  database: string;
-} {
-  const url = new URL(env.DATABASE_URL);
-  return {
-    host: env.DATABASE_HOST || url.hostname || "127.0.0.1",
-    port: env.DATABASE_PORT || Number(url.port || 3306),
-    user: env.DATABASE_USER || decodeURIComponent(url.username),
-    password: env.DATABASE_PASSWORD || decodeURIComponent(url.password),
-    database: env.DATABASE_NAME || decodeURIComponent(url.pathname.replace(/^\//, "")),
-  };
-}
-
-const parts = databaseParts();
-const adapter = new PrismaMariaDb({
-  host: parts.host,
-  port: parts.port,
-  user: parts.user,
-  password: parts.password,
-  database: parts.database,
-  connectionLimit: env.DATABASE_CONNECTION_LIMIT,
+const pool = new Pool({
+  connectionString: env.DATABASE_URL,
+  max: env.DATABASE_CONNECTION_LIMIT,
 });
+
+const adapter = new PrismaPg(pool);
 
 export const prisma = new PrismaClient({
   adapter,
@@ -36,4 +17,5 @@ export const prisma = new PrismaClient({
 
 export async function disconnectPrisma(): Promise<void> {
   await prisma.$disconnect();
+  await pool.end().catch(() => undefined);
 }

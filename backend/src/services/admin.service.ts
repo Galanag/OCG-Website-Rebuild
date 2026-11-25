@@ -13,8 +13,8 @@ export async function listUsers(params: { page: number; limit: number; skip: num
   const where: Prisma.UserWhereInput = { deletedAt: null };
   if (params.q) {
     where.OR = [
-      { name: { contains: params.q } },
-      { email: { contains: params.q } },
+      { name: { contains: params.q, mode: 'insensitive' } },
+      { email: { contains: params.q, mode: 'insensitive' } },
     ];
   }
   const [items, total] = await prisma.$transaction([
@@ -130,12 +130,12 @@ export async function publicSettings() {
 
 export async function listAuditLogs(params: { page: number; limit: number; skip: number; take: number; q?: string; action?: string }) {
   const where: Prisma.AuditLogWhereInput = {};
-  if (params.action) where.action = { contains: params.action };
+  if (params.action) where.action = { contains: params.action, mode: 'insensitive' };
   if (params.q) {
     where.OR = [
-      { action: { contains: params.q } },
-      { entityType: { contains: params.q } },
-      { userEmail: { contains: params.q } },
+      { action: { contains: params.q, mode: 'insensitive' } },
+      { entityType: { contains: params.q, mode: 'insensitive' } },
+      { userEmail: { contains: params.q, mode: 'insensitive' } },
     ];
   }
   const [items, total] = await prisma.$transaction([

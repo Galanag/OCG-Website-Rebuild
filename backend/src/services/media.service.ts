@@ -1,5 +1,3 @@
-import { randomUUID } from "node:crypto";
-import { mkdir, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileTypeFromBuffer } from "file-type";
 import type { MediaVisibility, Prisma } from "../generated/prisma/client.js";
@@ -7,13 +5,9 @@ import { prisma } from "../prisma/client.js";
 import { env } from "../config/env.js";
 import { ApiError } from "../utils/errors.js";
 import { publicAsset } from "./content-utils.js";
+import { getStorage, storageRoot } from "./storage.js";
 import type { z } from "zod";
 import type { mediaUpdateSchema } from "../validators/content.js";
-
-export const STORAGE_ROOT = process.env.STORAGE_ROOT
-  ? path.resolve(process.env.STORAGE_ROOT)
-  : path.resolve(process.cwd(), "..");
-const UPLOAD_ROOT = path.join(STORAGE_ROOT, "uploads");
 
 const allowedMimes = new Set([
   "image/jpeg", "image/png", "image/webp", "image/gif",
@@ -40,6 +34,22 @@ function extensionFor(mime: string, originalName: string): string {
   return (byMime[mime] || fromName || "bin").replace(/[^a-z0-9]/g, "").slice(0, 12) || "bin";
 }
 
+type StoredRef = { provider: "local" | "supabase"; bucket?: string; objectKey: string; url: string };
+
+function parseStoredRef(filePath: string): StoredRef {
+  if (filePath.startsWith("supabase://")) {
+    const rest = filePath.slice("supabase://".length);
+    const [bucket, ...parts] = rest.split("/");
+    return { provider: "supabase", bucket, objectKey: parts.join("/"), url: "" };
+  }
+  return { provider: "local", objectKey: filePath, url: "" };
+}
+
+function encodeStoredRef(ref: StoredRef): string {
+  if (ref.provider === "supabase") return `supabase://${ref.bucket}/${ref.objectKey}`;
+  return ref.objectKey;
+}
+
 export async function uploadMedia(
   file: { buffer: Buffer; originalname: string; mimetype: string },
   visibility: MediaVisibility,
@@ -56,23 +66,27 @@ export async function uploadMedia(
     throw new ApiError(415, "The declared MIME type does not match the file content.");
   }
   const extension = extensionFor(detected.mime, file.originalname);
-  const directory = imageMimes.has(detected.mime) ? "uploads/images" : "uploads/documents";
-  const absoluteDirectory = path.join(STORAGE_ROOT, directory);
-  await mkdir(absoluteDirectory, { recursive: true });
-  const storedName = `${randomUUID()}.${extension}`;
-  const filePath = path.posix.join(directory, storedName);
-  const absolutePath = path.join(STORAGE_ROOT, filePath);
-  await writeFile(absolutePath, file.buffer, { flag: "wx", mode: 0o640 });
+  const kind = imageMimes.has(detected.mime) ? "IMAGE" : "DOCUMENT";
+  const storage = getStorage();
+  const stored = await storage.put({
+    buffer: file.buffer,
+    mimeType: detected.mime,
+    extension,
+    originalName: file.originalname,
+    visibility,
+    kind,
+  });
+  const storedName = stored.objectKey.split("/").pop() || `${stored.objectKey}.${extension}`;
   try {
     return await prisma.mediaAsset.create({
       data: {
         originalName: path.basename(file.originalname).slice(0, 255),
         storedName,
-        filePath,
+        filePath: encodeStoredRef(stored),
         mimeType: detected.mime,
         extension,
         size: file.buffer.length,
-        kind: imageMimes.has(detected.mime) ? "IMAGE" : "DOCUMENT",
+        kind,
         visibility,
         altText: metadata.altText || path.basename(file.originalname),
         description: metadata.description || null,
@@ -80,7 +94,7 @@ export async function uploadMedia(
       },
     });
   } catch (error) {
-    await unlink(absolutePath).catch(() => undefined);
+    await storage.delete(stored).catch(() => undefined);
     throw error;
   }
 }
@@ -99,9 +113,9 @@ export async function listMedia(params: {
   if (params.kind) where.kind = params.kind as "IMAGE" | "DOCUMENT";
   if (params.q) {
     where.OR = [
-      { originalName: { contains: params.q } },
-      { description: { contains: params.q } },
-      { altText: { contains: params.q } },
+      { originalName: { contains: params.q, mode: "insensitive" } },
+      { description: { contains: params.q, mode: "insensitive" } },
+      { altText: { contains: params.q, mode: "insensitive" } },
     ];
   }
   const [items, total] = await prisma.$transaction([
@@ -141,7 +155,21 @@ export async function getMediaForFile(id: string, admin = false) {
   return asset;
 }
 
-export async function updateMedia(id: string, data: z.infer<typeof mediaUpdateSchema>, userId: string) {
+export async function resolveMediaDelivery(asset: { id: string; filePath: string; visibility: MediaVisibility; mimeType: string; originalName: string }) {
+  const ref = parseStoredRef(asset.filePath);
+  const storage = getStorage();
+  if (ref.provider === "local") {
+    const local = storage.localPath(ref);
+    if (!local) throw new ApiError(400, "Invalid media path.", undefined, "INVALID_MEDIA_PATH");
+    return { type: "file" as const, path: local };
+  }
+  if (asset.visibility === "PUBLIC") {
+    return { type: "redirect" as const, url: await storage.publicUrl(ref) };
+  }
+  return { type: "redirect" as const, url: await storage.signedUrl(ref, env.SUPABASE_SIGNED_URL_TTL_SECONDS) };
+}
+
+export async function updateMedia(id: string, data: z.infer<typeof mediaUpdateSchema>, _userId: string) {
   const asset = await prisma.mediaAsset.findFirst({ where: { id, deletedAt: null } });
   if (!asset) throw new ApiError(404, "Media not found.", undefined, "MEDIA_NOT_FOUND");
   await prisma.mediaAsset.update({
@@ -166,14 +194,17 @@ export async function deleteMedia(id: string): Promise<{ id: string }> {
   if (projectCovers + projectImages + newsFeatured + newsSocial + events + attachments + partnerships > 0) {
     throw new ApiError(409, "This media item is still used by content. Remove those references before deleting it.", undefined, "MEDIA_IN_USE");
   }
-  await unlink(path.join(STORAGE_ROOT, asset.filePath)).catch((error) => console.warn("Media file cleanup failed", error));
+  await getStorage().delete(parseStoredRef(asset.filePath)).catch((error) => console.warn("Media storage cleanup failed", error));
   await prisma.mediaAsset.delete({ where: { id } });
   return { id };
 }
 
 export function resolveMediaPath(asset: { filePath: string }): string {
-  const absolute = path.resolve(STORAGE_ROOT, asset.filePath);
-  if (!absolute.startsWith(path.join(STORAGE_ROOT, "uploads") + path.sep)) {
+  const ref = parseStoredRef(asset.filePath);
+  if (ref.provider !== "local") throw new ApiError(400, "Media is not stored locally.", undefined, "INVALID_MEDIA_PATH");
+  const absolute = path.resolve(storageRoot(), ref.objectKey);
+  const uploadsRoot = path.join(storageRoot(), "uploads") + path.sep;
+  if (!absolute.startsWith(uploadsRoot)) {
     throw new ApiError(400, "Invalid media path.", undefined, "INVALID_MEDIA_PATH");
   }
   return absolute;

@@ -104,11 +104,11 @@ export async function listAnnouncements(params: {
   if (params.kind === "tender") where.category = "BID_TENDER";
   if (params.q) {
     where.OR = [
-      { title: { contains: params.q } },
-      { reference: { contains: params.q } },
-      { summary: { contains: params.q } },
-      { positionTitle: { contains: params.q } },
-      { tenderReference: { contains: params.q } },
+      { title: { contains: params.q, mode: 'insensitive' } },
+      { reference: { contains: params.q, mode: 'insensitive' } },
+      { summary: { contains: params.q, mode: 'insensitive' } },
+      { positionTitle: { contains: params.q, mode: 'insensitive' } },
+      { tenderReference: { contains: params.q, mode: 'insensitive' } },
     ];
   }
   if (params.state === "OPEN") {

@@ -99,14 +99,14 @@ export async function listProjects(params: {
   const where: Prisma.ProjectWhereInput = { deletedAt: null };
   if (!params.admin) where.published = true;
   if (params.status) where.status = params.status as any;
-  if (params.category) where.category = { contains: params.category };
+  if (params.category) where.category = { contains: params.category, mode: 'insensitive' };
   if (params.featured === "true") where.featured = true;
   if (params.q) {
     where.OR = [
-      { title: { contains: params.q } },
-      { reference: { contains: params.q } },
-      { shortDescription: { contains: params.q } },
-      { location: { contains: params.q } },
+      { title: { contains: params.q, mode: 'insensitive' } },
+      { reference: { contains: params.q, mode: 'insensitive' } },
+      { shortDescription: { contains: params.q, mode: 'insensitive' } },
+      { location: { contains: params.q, mode: 'insensitive' } },
     ];
   }
   const [items, total] = await prisma.$transaction([

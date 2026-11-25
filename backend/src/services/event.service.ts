@@ -60,10 +60,10 @@ export async function listEvents(params: {
   if (params.timeframe === "past") where.startsAt = { lt: new Date() };
   if (params.q) {
     where.OR = [
-      { title: { contains: params.q } },
-      { description: { contains: params.q } },
-      { location: { contains: params.q } },
-      { organizer: { contains: params.q } },
+      { title: { contains: params.q, mode: 'insensitive' } },
+      { description: { contains: params.q, mode: 'insensitive' } },
+      { location: { contains: params.q, mode: 'insensitive' } },
+      { organizer: { contains: params.q, mode: 'insensitive' } },
     ];
   }
   const [items, total] = await prisma.$transaction([

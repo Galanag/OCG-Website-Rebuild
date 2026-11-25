@@ -67,11 +67,15 @@ export async function remove(request: Request, response: Response): Promise<void
 export async function file(request: Request, response: Response, next: NextFunction): Promise<void> {
   const admin = request.baseUrl.includes("/admin");
   const asset = await media.getMediaForFile(param(request, "id"), admin);
-  const absolutePath = media.resolveMediaPath(asset);
+  const delivery = await media.resolveMediaDelivery(asset);
   const download = request.query.download === "1" || request.query.download === "true";
   response.setHeader("X-Content-Type-Options", "nosniff");
   response.setHeader("Content-Disposition", `${download ? "attachment" : "inline"}; filename="${encodeURIComponent(asset.originalName)}"`);
-  response.sendFile(absolutePath, (error: Error | undefined) => {
+  if (delivery.type === "redirect") {
+    response.redirect(302, delivery.url);
+    return;
+  }
+  response.sendFile(delivery.path, (error: Error | undefined) => {
     if (error && !response.headersSent) next(error);
   });
 }

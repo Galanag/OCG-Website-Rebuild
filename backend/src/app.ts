@@ -16,7 +16,7 @@ import { publicSubmissionRoutes, adminSubmissionRoutes } from "./routes/submissi
 import { adminRoutes } from "./routes/admin.routes.js";
 import { publicSettings, publicStats, listPageSections } from "./controllers/admin.controller.js";
 
-export const app = express();
+const app = express();
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
 
@@ -47,6 +47,8 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
   message: { error: { code: "RATE_LIMITED", message: "Too many API requests. Please try again later." } },
 });
+// In-memory rate limiting is per-instance; acceptable for single-instance/local dev.
+// For multi-instance/serverless production, configure a shared store (Redis/Upstash) before launch.
 app.use("/api/v1", apiLimiter);
 
 app.get("/api/v1/health", (_request, response) => {
@@ -89,3 +91,5 @@ app.use((error: unknown, _request: express.Request, response: express.Response, 
   if (response.headersSent) return;
   response.status(result.status).json(result.body);
 });
+export { app };
+export default app;

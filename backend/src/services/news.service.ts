@@ -76,9 +76,9 @@ export async function listNews(params: {
   if (params.tag) where.tags = { array_contains: params.tag } as any;
   if (params.q) {
     where.OR = [
-      { title: { contains: params.q } },
-      { summary: { contains: params.q } },
-      { content: { contains: params.q } },
+      { title: { contains: params.q, mode: 'insensitive' } },
+      { summary: { contains: params.q, mode: 'insensitive' } },
+      { content: { contains: params.q, mode: 'insensitive' } },
     ];
   }
   const [items, total] = await prisma.$transaction([

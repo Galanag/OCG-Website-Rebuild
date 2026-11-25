@@ -6,10 +6,22 @@
   "scripts": {
     "build:css": "tailwindcss -i ./src/input.css -o ./assets/css/site.css --minify",
     "build:js": "tsc -p tsconfig.json",
-    "build": "npm run build:css && npm run build:js"
+    "build": "npm run build:css && npm run build:js",
+    "build:admin:css": "tailwindcss -c admin/tailwind.config.js -i admin/src/input.css -o admin/assets/css/admin.css --minify",
+    "build:admin:js": "tsc -p admin/tsconfig.json",
+    "build:admin": "npm run build:admin:css && npm run build:admin:js",
+    "build:all": "npm run build && npm run build:admin",
+    "dev:api": "npm --prefix backend run dev",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "php -S 127.0.0.1:8000 -t .",
+    "dev:all": "concurrently --kill-others --names API,PHP --prefix-colors blue,green \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "test:backend": "npm --prefix backend test",
+    "test:php": "for file in *.php includes/*.php admin/*.php; do php -l \"$file\" || exit 1; done",
+    "test": "npm run test:php && npm run test:backend"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.21",
+    "concurrently": "^10.0.7",
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.9.3"

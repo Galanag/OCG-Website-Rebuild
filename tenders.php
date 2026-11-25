@@ -1,0 +1,1 @@
+<?php $forceKind = 'tender'; $forceTitle = 'Bids & Tenders'; require __DIR__ . '/announcements.php';

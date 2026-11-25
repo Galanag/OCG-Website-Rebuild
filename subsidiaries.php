@@ -1,9 +1,14 @@
 <?php
 require_once __DIR__ . '/includes/data.php';
-$pageTitle = 'Subsidiaries'; $pageDescription = 'Explore the five OCG subsidiaries and their specialist construction, engineering, infrastructure, property and tourism capabilities.';
-$heroTitle = 'The OCG family'; $heroEyebrow = 'Our subsidiaries'; $heroText = 'Five specialist organizations working together to deliver complementary capabilities across Ethiopia’s development sectors.'; $heroImage = '12/6.1-8.webp';
+$pageTitle = 'Subsidiaries';
+$pageDescription = 'The five OCG subsidiaries, their mandates, reported 2018 historical performance and FY 2026/2027 strategic targets.';
+$heroTitle = 'The OCG family'; $heroEyebrow = 'Our subsidiaries'; $heroText = 'Five specialized organizations working across construction, engineering, infrastructure, real estate, tourism and hospitality.'; $heroImage = '12/6.1-8.webp';
 require __DIR__ . '/includes/header.php'; require __DIR__ . '/includes/page-hero.php';
 ?>
-<main id="main-content"><section class="section"><div class="container"><div class="section-heading"><div><span class="eyebrow">Complementary strengths</span><h2>Specialists, connected by one purpose.</h2><p>OCG’s public website describes a group network covering general construction, engineering consultancy, civil works, industrial construction, real estate and hospitality development.</p></div></div><div class="sub-detail-grid"><?php foreach ($subsidiaries as $sub): ?><article class="sub-detail"><div class="sub-detail-head"><div class="subsidiary-mark" style="margin:0"><?= e($sub['mark']) ?></div><div><div class="small-label"><?= e($sub['category']) ?></div><h2><?= e($sub['name']) ?></h2></div></div><p><?= e($sub['description']) ?></p><a class="text-link" href="<?= e($sub['url']) ?>" target="_blank" rel="noopener">Visit official website <span aria-hidden="true">↗</span></a></article><?php endforeach; ?></div></div></section>
-<section class="section section-muted"><div class="container"><div class="cta-band"><div><span class="eyebrow eyebrow-light">Integrated capability</span><h2>From studies and design to delivery.</h2><p>OCG’s connected model can link specialist consultancy and construction capability within a wider development network.</p></div><div class="cta-band-actions"><a class="btn btn-light" href="services-projects.php">Explore services <span aria-hidden="true">→</span></a></div></div></div></section></main>
+<main id="main-content">
+<?= ocg_page_nav(['overview'=>'Overview','occ'=>'OCC','obm'=>'OBM','walabu'=>'Walabu','eco'=>'ECO','ija'=>'IJA Developers']) ?>
+<?= ocg_corporate_section('subsidiaries', 'overview', 'Five specialized subsidiaries') ?>
+<?php foreach (['occ'=>'OCC','obm'=>'OBM','walabu'=>'Walabu','eco'=>'ECO','ija'=>'IJA Developers'] as $key => $label): $section = ocg_page_section('subsidiaries', $key, ['title'=>$label,'content'=>'','metadata'=>[]]); echo '<div id="' . e($key) . '">' . ocg_subsidiary_card(['name'=>$section['title'] ?? $label,'content'=>$section['content'] ?? '','metadata'=>$section['metadata'] ?? []]) . '</div>'; endforeach; ?>
+<section class="section section-muted"><div class="container"><div class="notice-legal">Historical 2018 figures and FY 2026/2027 targets are reporting-period-specific. Establishment chronology and current leadership require management confirmation where the source documents differ.</div></div></section>
+</main>
 <?php require __DIR__ . '/includes/footer.php'; ?>

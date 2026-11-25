@@ -13,9 +13,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $feedback = clean_message((string)($_POST['feedback'] ?? ''), 2000);
         if ($area === '' || $rating === '' || $feedback === '' || ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL))) set_flash('error', 'Please select a topic and rating, add your feedback and check the email address if provided.');
         else {
-            $body = "OCG public website feedback\n\nName: {$name}\nEmail: {$email}\nFeedback area: {$area}\nRating: {$rating}\n\nFeedback:\n{$feedback}\n\nReceived: " . date(DATE_ATOM);
-            if (safe_mail('OCG website feedback survey', $body, $email ?: null)) set_flash('success', 'Thank you for taking the time to share your feedback.');
-            else set_flash('error', 'Your feedback is valid, but email delivery is not configured on this server yet.');
+            $apiSaved = false;
+            $apiResult = ocg_api_post_json('/survey', [
+                'name' => $name ?: null,
+                'email' => $email ?: null,
+                'area' => $area,
+                'rating' => $rating,
+                'feedback' => $feedback,
+            ]);
+            if ($apiResult['ok']) {
+                $apiSaved = true;
+                set_flash('success', 'Thank you for taking the time to share your feedback.');
+            }
+            if (!$apiSaved) {
+                $body = "OCG public website feedback\n\nName: {$name}\nEmail: {$email}\nFeedback area: {$area}\nRating: {$rating}\n\nFeedback:\n{$feedback}\n\nReceived: " . date(DATE_ATOM);
+                if (safe_mail('OCG website feedback survey', $body, $email ?: null)) set_flash('success', 'Thank you for taking the time to share your feedback.');
+                else set_flash('error', 'Your feedback is valid, but the submission service and email delivery are unavailable. Please try later.');
+            }
         }
     }
     header('Location: survey.php'); exit;

@@ -1,0 +1,5 @@
+# Admin TypeScript source is development input; only compiled assets are public.
+<FilesMatch "\.(ts|map)$">
+  Require all denied
+</FilesMatch>
+Options -Indexes

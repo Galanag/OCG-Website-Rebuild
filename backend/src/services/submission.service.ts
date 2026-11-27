@@ -43,9 +43,9 @@ export async function listSubmissions(resource: "contact" | "partnership" | "sur
   const status = params.status ? { status: params.status as SubmissionStatus } : {};
   const q = params.q ? {
     OR: [
-      { email: { contains: params.q, mode: 'insensitive' } },
-      { subject: { contains: params.q, mode: 'insensitive' } },
-      { message: { contains: params.q, mode: 'insensitive' } },
+      { email: { contains: params.q, mode: 'insensitive' as const } },
+      { subject: { contains: params.q, mode: 'insensitive' as const } },
+      { message: { contains: params.q, mode: 'insensitive' as const } },
     ],
   } : {};
   if (resource === "contact") {

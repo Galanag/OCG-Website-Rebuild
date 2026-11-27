@@ -87,33 +87,71 @@ function ocg_api_request(string $method, string $path, array $body = [], array $
         $headers[] = 'Content-Type: application/json';
     }
 
-    $context = stream_context_create([
-        'http' => [
-            'method' => $method,
-            'header' => implode("\r\n", $headers),
-            'content' => $content,
-            'timeout' => 3.5,
-            'ignore_errors' => true,
-            'protocol_version' => '1.1',
-        ],
-        'ssl' => [
-            'verify_peer' => true,
-            'verify_peer_name' => true,
-        ],
-    ]);
+    $timeout = 1.0;
+    $oldTimeout = ini_get('default_socket_timeout');
+    ini_set('default_socket_timeout', '1');
 
-    $http_response_header = [];
-    $raw = @file_get_contents($url, false, $context);
-    $status = 0;
-    foreach ($http_response_header as $line) {
-        if (preg_match('#HTTP/\S+\s+(\d{3})#', $line, $matches)) {
-            $status = (int) $matches[1];
-            break;
+    $curlResult = null;
+    if (function_exists('curl_init')) {
+        $ch = curl_init($url);
+        if ($ch !== false) {
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT_MS, 800);
+            curl_setopt($ch, CURLOPT_TIMEOUT_MS, 1500);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, false);
+            curl_setopt($ch, CURLOPT_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+            curl_setopt($ch, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTP | CURLPROTO_HTTPS);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+            if ($content !== '' && $method !== 'GET') {
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $content);
+            }
+            $raw = curl_exec($ch);
+            $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+            $err = curl_errno($ch);
+            curl_close($ch);
+            if ($oldTimeout !== false) ini_set('default_socket_timeout', (string) $oldTimeout);
+            if ($err !== 0 || $raw === false) {
+                return ['ok' => false, 'status' => $status ?: 0, 'data' => null];
+            }
+            $curlResult = [$status, $raw];
         }
     }
-    if ($raw === false) {
-        return ['ok' => false, 'status' => $status ?: 0, 'data' => null];
+
+    if ($curlResult !== null) {
+        [$status, $raw] = $curlResult;
+    } else {
+        $context = stream_context_create([
+            'http' => [
+                'method' => $method,
+                'header' => implode("\r\n", $headers),
+                'content' => $content,
+                'timeout' => $timeout,
+                'ignore_errors' => true,
+                'protocol_version' => '1.1',
+            ],
+            'ssl' => [
+                'verify_peer' => true,
+                'verify_peer_name' => true,
+            ],
+        ]);
+        $http_response_header = [];
+        $raw = @file_get_contents($url, false, $context);
+        $status = 0;
+        foreach ($http_response_header as $line) {
+            if (preg_match('#HTTP/\S+\s+(\d{3})#', $line, $matches)) {
+                $status = (int) $matches[1];
+                break;
+            }
+        }
+        if ($oldTimeout !== false) ini_set('default_socket_timeout', (string) $oldTimeout);
+        if ($raw === false) {
+            return ['ok' => false, 'status' => $status ?: 0, 'data' => null];
+        }
     }
+
     $data = json_decode($raw, true);
     if (json_last_error() !== JSON_ERROR_NONE) {
         $data = null;

@@ -5,19 +5,19 @@ require_once __DIR__ . '/bootstrap.php';
 
 $services = [
     ['title' => 'Building Construction', 'text' => 'Residential, commercial, mixed-use, institutional and public buildings, including finishing works.', 'image' => '12/6.1-8.webp', 'number' => '01'],
-    ['title' => 'Infrastructure & Civil Works', 'text' => 'Roads, bridges, transportation networks, urban infrastructure and public amenities.', 'image' => '12/photo_2025-12-17_14-55-02-1024x768.webp', 'number' => '02'],
-    ['title' => 'Engineering & Consulting', 'text' => 'Feasibility studies, surveys, design, contract administration, supervision and quality assurance.', 'image' => '12/gololicha-2-1024x682.webp', 'number' => '03'],
+    ['title' => 'Infrastructure & Civil Works', 'text' => 'Airports, highways, bridges, dams, power plants, telecommunications and urban infrastructure.', 'image' => '12/photo_2025-12-17_14-55-02-1024x768.webp', 'number' => '02'],
+    ['title' => 'Engineering & Consulting', 'text' => 'Feasibility studies, hydrological/geophysical surveys, design, contract administration, supervision and quality assurance.', 'image' => '12/gololicha-2-1024x682.webp', 'number' => '03'],
     ['title' => 'Real Estate Development', 'text' => 'Residential and commercial property, urban planning, land development and investment.', 'image' => '09/wanchi-destination-1024x575.webp', 'number' => '04'],
-    ['title' => 'Hospitality & Tourism', 'text' => 'Tourism destinations, resorts, hotels, recreation centres and visitor experiences.', 'image' => '09/wanchi-destination-1024x575.webp', 'number' => '05'],
-    ['title' => 'Water & Environmental Projects', 'text' => 'Irrigation, dams, water supply, boreholes, sanitation and environmentally responsible development.', 'image' => '12/walmal-1024x576.webp', 'number' => '06'],
+    ['title' => 'Hospitality & Tourism', 'text' => 'Eco-tourism, resorts, hotels, recreation centres and visitor experiences.', 'image' => '09/wanchi-destination-1024x575.webp', 'number' => '05'],
+    ['title' => 'Water & Environmental Projects', 'text' => 'Irrigation, dams, water supply, drilling, sanitation and environmentally responsible development.', 'image' => '12/walmal-1024x576.webp', 'number' => '06'],
 ];
 
 $subsidiaries = [
-    ['name' => 'Oromia Construction Corporation (OCC)', 'short' => 'OCC', 'category' => 'Construction & infrastructure', 'description' => 'Delivers large-scale construction and infrastructure projects, including roads, bridges, buildings, water works, irrigation and dams.', 'url' => 'https://occ-oro.com/', 'mark' => 'OCC'],
-    ['name' => 'Engineering Corporation of Oromia (ECO)', 'short' => 'ECO', 'category' => 'Engineering consultancy', 'description' => 'Provides study, design, supervision and consulting services across water resources, transport, buildings, energy, urban planning and related engineering fields.', 'url' => 'https://ecoet.org/', 'mark' => 'ECO'],
-    ['name' => 'OBM Construction Share Company', 'short' => 'OBM', 'category' => 'Building & civil works', 'description' => 'A Grade I general contractor working across building construction, roads, dams, irrigation and major civil works.', 'url' => 'https://www.obmconstructionsc.com/', 'mark' => 'OBM'],
-    ['name' => 'Walabu Construction Share Company', 'short' => 'WALABU', 'category' => 'Industrial & civil construction', 'description' => 'Supports industrial parks, building projects, road works, irrigation and wider infrastructure development.', 'url' => 'https://www.walabuconstruction.com/', 'mark' => 'W'],
-    ['name' => 'IJA Developers Share Company', 'short' => 'IJA', 'category' => 'Real estate, hotels & tourism', 'description' => 'Develops real estate, tourism destinations, parks, recreation centres, convention facilities and hospitality ventures, including destinations such as Wanchi and Langano.', 'url' => 'https://ijadevelopers.com/', 'mark' => 'IJA'],
+    ['name' => 'Oromia Construction Corporation (OCC)', 'short' => 'OCC', 'category' => 'Construction & infrastructure', 'description' => 'Focused on large-scale construction projects across residential, commercial and public infrastructure, with strong emphasis on sustainable practices and innovation. Core focus: water, dams, drilling, roads, buildings.', 'url' => 'https://occ-oro.com/', 'mark' => 'OCC', 'ceo' => 'Eng. Ashenafi Daba'],
+    ['name' => 'OBM Construction Share Company', 'short' => 'OBM', 'category' => 'Building & civil works', 'description' => 'Excels in public and private sector projects, employing skilled labor and modern construction techniques for excellence and timely completion. Core focus: buildings, real estate, inputs, rental.', 'url' => 'https://www.obmconstructionsc.com/', 'mark' => 'OBM', 'ceo' => 'Eng. Addisu Berhanu'],
+    ['name' => 'Walabu Construction Share Company', 'short' => 'Walabu', 'category' => 'Industrial & civil construction', 'description' => 'Recognized for strong project management capabilities, executing industrial facilities, urban development, roads and infrastructure. Core focus: industrial parks, roads, urban works.', 'url' => 'https://www.walabuconstruction.com/', 'mark' => 'W', 'ceo' => 'Eng. Taddese Diriba'],
+    ['name' => 'Engineering Corporation of Oromia (ECO)', 'short' => 'ECO', 'category' => 'Engineering consultancy', 'description' => 'Provides comprehensive engineering solutions in structural, civil and environmental engineering, adhering to international standards. Core focus: design, supervision, ESIA, QC.', 'url' => 'https://ecoet.org/', 'mark' => 'ECO', 'ceo' => 'Eng. Selamawit Seid'],
+    ['name' => 'IJA Developers Share Company', 'short' => 'IJA', 'category' => 'Real estate, hotels & tourism', 'description' => 'Specializes in real estate development and hospitality ventures, creating vibrant communities through residential complexes, commercial spaces and tourism projects. Core focus: eco-tourism, resorts, real estate.', 'url' => 'https://ijadevelopers.com/', 'mark' => 'IJA', 'ceo' => 'Mr. Tesfaye Alemayehu'],
 ];
 
 $projects = [
@@ -32,12 +32,4 @@ $leadership = [
     ['name' => 'Dr. Fekadu Megersa Senbet', 'role' => 'Deputy CEO, Corporate Services'],
     ['name' => 'Eng. Habib Kumbi Gelchu', 'role' => 'Deputy CEO, Engineering Operation'],
     ['name' => 'Eng. Dawit Bekele', 'role' => 'Deputy CEO, Design and Contract Administration'],
-    ['name' => 'Obse Alemayehu Tegenu', 'role' => 'International Relations and Communication Head'],
-    ['name' => 'Fekadu Kabeto Furo', 'role' => 'Procurement Director'],
-    ['name' => 'Eng. Bahmud Godana Komicha', 'role' => 'Construction and Production Director'],
-    ['name' => 'Ketema Jada Tirfesa', 'role' => 'Planning and Budget Director'],
-    ['name' => 'Hailu Megersa Tola', 'role' => 'HR Development and General Service Director'],
-    ['name' => 'Abera Beyene Feyisa', 'role' => 'Design and Contract Administration Director'],
-    ['name' => 'Dr. Mohammed Husein Bule', 'role' => 'Business Development and Real Estate Director'],
-    ['name' => 'Gadisa Belema Oweta', 'role' => 'Finance and Asset Management Director'],
 ];

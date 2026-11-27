@@ -7,7 +7,10 @@ const providerSchema = z.enum(["local", "supabase"]).default("local");
 
 const schema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
-  PORT: z.coerce.number().int().min(1).max(65535).default(3000),
+  PORT: z.preprocess(
+    (value) => value === "" || value === null ? undefined : value,
+    z.coerce.number().int().min(1).max(65535).default(3000)
+  ),
   PUBLIC_APP_URL: z.string().url().default("http://127.0.0.1:8000"),
   API_PUBLIC_URL: z.string().url().default("http://127.0.0.1:3000/api/v1"),
   CORS_ORIGINS: z.string().default("http://127.0.0.1:8000,http://localhost:8000"),
